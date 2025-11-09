@@ -3,6 +3,7 @@ package com.mycompany.demogiaodien;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -23,22 +24,23 @@ public class TransactionDetailFrame extends JFrame {
 
     public TransactionDetailFrame(CustomerInfo customer, String fromDate, String toDate) {
         setTitle("Chi tiết giao dịch - " + customer.getName() + " (" + customer.getId() + ")");
-        setSize(560, 360);
+        setSize(900, 420);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.add(new JLabel("Khách hàng: " + customer.getName() + " (" + customer.getId() + ")"), BorderLayout.NORTH);
-        headerPanel.add(new JLabel("Khoảng thời gian: " + fromDate + " - " + toDate), BorderLayout.SOUTH);
+        JPanel headerPanel = new JPanel(new GridLayout(3, 1));
+        headerPanel.add(new JLabel("Khách hàng: " + customer.getName() + " (" + customer.getId() + ")"));
+        headerPanel.add(new JLabel("Liên hệ: " + customer.getPhoneNumber() + " | " + customer.getEmail()));
+        headerPanel.add(new JLabel("Hạng thành viên: " + customer.getMembershipTier() + " | Khoảng thời gian: " + fromDate + " - " + toDate));
         add(headerPanel, BorderLayout.NORTH);
 
         orders = customer.getOrders();
 
-        String[] columns = {"Mã đơn hàng", "Tổng tiền", ""};
+        String[] columns = {"Mã đơn hàng", "Ngày đặt", "Trạng thái", "Thanh toán", "Địa chỉ giao hàng", "Tổng tiền", ""};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 2;
+                return column == 6;
             }
         };
 
@@ -46,18 +48,31 @@ public class TransactionDetailFrame extends JFrame {
         for (Order order : orders) {
             long amount = order.getTotalAmount();
             total += amount;
-            model.addRow(new Object[]{order.getId(), DataRepository.formatCurrency(amount), "Xem chi tiết"});
+            model.addRow(new Object[]{
+                order.getId(),
+                order.getOrderDate(),
+                order.getStatus(),
+                order.getPaymentMethod(),
+                order.getShippingAddress(),
+                DataRepository.formatCurrency(amount),
+                "Xem chi tiết"
+            });
         }
 
         JTable table = new JTable(model);
         table.setRowHeight(28);
-        table.getColumnModel().getColumn(2).setPreferredWidth(120);
-        table.getColumnModel().getColumn(2).setCellRenderer(new ButtonRenderer());
-        table.getColumnModel().getColumn(2).setCellEditor(new ButtonEditor(new JButton("Xem chi tiết")));
+        table.getColumnModel().getColumn(6).setPreferredWidth(120);
+        table.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
+        table.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JButton("Xem chi tiết")));
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        footerPanel.add(new JLabel("Tổng doanh thu: " + DataRepository.formatCurrency(total)));
+        JPanel footerPanel = new JPanel(new BorderLayout());
+        JButton backButton = new JButton("Trở về");
+        backButton.addActionListener(e -> dispose());
+        footerPanel.add(backButton, BorderLayout.WEST);
+        JPanel totalPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        totalPanel.add(new JLabel("Tổng doanh thu: " + DataRepository.formatCurrency(total)));
+        footerPanel.add(totalPanel, BorderLayout.CENTER);
         add(footerPanel, BorderLayout.SOUTH);
     }
 
