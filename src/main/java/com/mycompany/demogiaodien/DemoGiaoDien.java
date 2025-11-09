@@ -1,16 +1,14 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.mycompany.demogiaodien;
 
-/**
- *
- * @author ngoso
- */
+import javax.swing.SwingUtilities;
+
 public class DemoGiaoDien {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        SwingUtilities.invokeLater(() -> {
+            MainMenuFrame frame = new MainMenuFrame();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }
