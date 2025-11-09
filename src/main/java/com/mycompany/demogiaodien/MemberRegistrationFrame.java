@@ -4,13 +4,18 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class MemberRegistrationFrame extends JFrame {
+
+    private final Map<String, JTextField> fields = new LinkedHashMap<>();
 
     public MemberRegistrationFrame() {
         setTitle("Đăng ký thành viên - QLST Điện Máy (Desktop)");
@@ -31,6 +36,7 @@ public class MemberRegistrationFrame extends JFrame {
         add(formPanel, BorderLayout.CENTER);
 
         JButton submitButton = new JButton("Đăng ký");
+        submitButton.addActionListener(e -> showConfirmationDialog());
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(submitButton);
         add(buttonPanel, BorderLayout.SOUTH);
@@ -46,5 +52,16 @@ public class MemberRegistrationFrame extends JFrame {
         gbc.weightx = 1;
         JTextField field = new JTextField(value);
         panel.add(field, gbc);
+        fields.put(label, field);
+    }
+
+    private void showConfirmationDialog() {
+        StringBuilder message = new StringBuilder("Đăng ký thành công!\n\n");
+        fields.forEach((label, field) -> message.append(label)
+                .append(": ")
+                .append(field.getText().trim())
+                .append('\n'));
+
+        JOptionPane.showMessageDialog(this, message.toString(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
     }
 }
