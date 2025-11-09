@@ -1,8 +1,10 @@
 package com.mycompany.demogiaodien;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.util.List;
+import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -11,6 +13,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 
 public class CustomerRevenueFrame extends JFrame {
 
@@ -26,7 +30,7 @@ public class CustomerRevenueFrame extends JFrame {
         this.customers = DataRepository.getCustomerInfos();
 
         setTitle("Thống kê khách hàng theo doanh thu");
-        setSize(640, 360);
+        setSize(900, 420);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
@@ -37,26 +41,30 @@ public class CustomerRevenueFrame extends JFrame {
         filterPanel.add(new JLabel(this.toDate));
         add(filterPanel, BorderLayout.NORTH);
 
-        String[] columns = {"Mã KH", "Họ tên", "Số giao dịch", "Tổng doanh thu"};
+        String[] columns = {"Mã KH", "Họ tên", "Số điện thoại", "Email", "Hạng", "Số giao dịch", "Tổng doanh thu", ""};
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return column == 7;
             }
         };
 
         table = new JTable(model);
         table.setRowHeight(24);
 
+        table.getColumnModel().getColumn(7).setPreferredWidth(120);
+        table.getColumnModel().getColumn(7).setCellRenderer(new DetailButtonRenderer());
+        table.getColumnModel().getColumn(7).setCellEditor(new DetailButtonEditor(new JButton("Xem chi tiết")));
+
         populateTable();
 
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        JButton detailButton = new JButton("Xem chi tiết");
-        detailButton.addActionListener(e -> openDetailDialog());
+        JButton backButton = new JButton("Trở về");
+        backButton.addActionListener(e -> dispose());
 
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        actionPanel.add(detailButton);
+        actionPanel.add(backButton);
         add(actionPanel, BorderLayout.SOUTH);
     }
 
@@ -66,23 +74,68 @@ public class CustomerRevenueFrame extends JFrame {
             Object[] row = {
                 customer.getId(),
                 customer.getName(),
+                customer.getPhoneNumber(),
+                customer.getEmail(),
+                customer.getMembershipTier(),
                 customer.getTransactionCount(),
-                DataRepository.formatCurrency(customer.getTotalRevenue())
+                DataRepository.formatCurrency(customer.getTotalRevenue()),
+                "Xem chi tiết"
             };
             model.addRow(row);
         }
     }
 
-    private void openDetailDialog() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một khách hàng trong bảng.");
+    private void openDetailDialog(int rowIndex) {
+        if (rowIndex < 0 || rowIndex >= customers.size()) {
+            JOptionPane.showMessageDialog(this, "Dữ liệu khách hàng không hợp lệ.");
             return;
         }
 
-        CustomerInfo customer = customers.get(selectedRow);
+        CustomerInfo customer = customers.get(rowIndex);
         TransactionDetailFrame frame = new TransactionDetailFrame(customer, fromDate, toDate);
         frame.setLocationRelativeTo(this);
         frame.setVisible(true);
+    }
+
+    private class DetailButtonRenderer extends JButton implements TableCellRenderer {
+
+        DetailButtonRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setText(value == null ? "" : value.toString());
+            return this;
+        }
+    }
+
+    private class DetailButtonEditor extends AbstractCellEditor implements TableCellEditor, java.awt.event.ActionListener {
+
+        private final JButton button;
+        private int currentRow = -1;
+
+        DetailButtonEditor(JButton button) {
+            this.button = button;
+            this.button.addActionListener(this);
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            currentRow = row;
+            button.setText(value == null ? "" : value.toString());
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return button.getText();
+        }
+
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent e) {
+            openDetailDialog(currentRow);
+            fireEditingStopped();
+        }
     }
 }
